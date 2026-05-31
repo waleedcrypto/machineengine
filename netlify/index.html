@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MW Trader — Deep Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════════════ HEADER ═══════════════════ -->
+  <header class="site-header">
+    <div class="header-left">
+      <div class="logo-block">
+        <span class="logo-mw">MW</span>
+        <span class="logo-trader">TRADER</span>
+        <span class="logo-tag">INSTITUTIONAL</span>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-pill" id="hdr-symbol">
+        <span class="meta-label">PAIR</span>
+        <span class="meta-val" id="symbol-val">BTCUSDT</span>
+      </div>
+      <div class="meta-pill" id="hdr-tf">
+        <span class="meta-label">TF</span>
+        <span class="meta-val" id="tf-val">—</span>
+      </div>
+      <div class="meta-pill" id="hdr-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="meta-val" id="engine-status-val">CONNECTING</span>
+      </div>
+      <div class="meta-pill">
+        <span class="meta-label">PRICE</span>
+        <span class="meta-val cyan" id="live-price">—</span>
+      </div>
+      <div class="meta-pill">
+        <span class="meta-label">UPDATED</span>
+        <span class="meta-val muted" id="last-updated">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+  <main class="main-grid">
+
+    <!-- ROW 1: Live Signal + Probability Panel -->
+    <section class="row-top">
+
+      <!-- ── LIVE SIGNAL CARD ── -->
+      <div class="card card-signal" id="signal-card">
+        <div class="card-header">
+          <span class="card-title">⚡ LIVE SIGNAL</span>
+          <div class="signal-badges">
+            <span class="badge-quality" id="sig-quality">—</span>
+            <span class="badge-status" id="sig-status-badge">WAITING</span>
+          </div>
+        </div>
+
+        <div class="signal-direction-block" id="direction-block">
+          <div class="direction-icon" id="direction-icon">—</div>
+          <div class="direction-meta">
+            <div class="direction-label" id="direction-label">SCANNING</div>
+            <div class="direction-sub" id="direction-sub">Awaiting ML setup...</div>
+          </div>
+          <div class="confidence-ring-wrap">
+            <svg class="conf-ring" viewBox="0 0 80 80">
+              <circle class="ring-bg" cx="40" cy="40" r="34"/>
+              <circle class="ring-fill" id="ring-fill" cx="40" cy="40" r="34"
+                stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+            </svg>
+            <div class="conf-center">
+              <span class="conf-num" id="conf-num">0</span>
+              <span class="conf-pct">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="levels-grid">
+          <div class="level-row">
+            <span class="level-name">ENTRY ZONE</span>
+            <span class="level-val cyan" id="lv-entry">—</span>
+          </div>
+          <div class="level-row">
+            <span class="level-name">CURRENT</span>
+            <span class="level-val white" id="lv-current">—</span>
+          </div>
+          <div class="level-row">
+            <span class="level-name">STOP LOSS</span>
+            <span class="level-val red" id="lv-sl">—</span>
+          </div>
+          <div class="level-divider"></div>
+          <div class="level-row tp-row">
+            <div class="tp-item">
+              <span class="tp-label">TP1</span>
+              <span class="tp-val green" id="lv-tp1">—</span>
+              <span class="tp-rr" id="rr-tp1">—</span>
+            </div>
+            <div class="tp-item">
+              <span class="tp-label">TP2</span>
+              <span class="tp-val green" id="lv-tp2">—</span>
+              <span class="tp-rr" id="rr-tp2">—</span>
+            </div>
+            <div class="tp-item">
+              <span class="tp-label">TP3</span>
+              <span class="tp-val green" id="lv-tp3">—</span>
+              <span class="tp-rr" id="rr-tp3">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-meta-row">
+          <div class="sig-meta-item">
+            <span class="sig-meta-label">REGIME</span>
+            <span class="sig-meta-val" id="sig-regime">—</span>
+          </div>
+          <div class="sig-meta-item">
+            <span class="sig-meta-label">ORDERFLOW</span>
+            <span class="sig-meta-val" id="sig-of">—</span>
+          </div>
+          <div class="sig-meta-item">
+            <span class="sig-meta-label">EXPIRES</span>
+            <span class="sig-meta-val muted" id="sig-expires">—</span>
+          </div>
+        </div>
+
+        <div class="signal-reason" id="signal-reason">Warming up engine... Waiting for first candle close.</div>
+      </div>
+
+      <!-- ── PROBABILITY PANEL ── -->
+      <div class="card card-prob">
+        <div class="card-header">
+          <span class="card-title">📊 PROBABILITY PANEL</span>
+        </div>
+        <div class="prob-bars">
+          <div class="prob-row">
+            <div class="prob-label-row">
+              <span class="prob-name green">TP1 Hit Chance</span>
+              <span class="prob-pct green" id="prob-tp1-val">0%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill tp1-fill" id="prob-tp1-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prob-row">
+            <div class="prob-label-row">
+              <span class="prob-name green">TP2 Hit Chance</span>
+              <span class="prob-pct green" id="prob-tp2-val">0%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill tp2-fill" id="prob-tp2-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prob-row">
+            <div class="prob-label-row">
+              <span class="prob-name" style="color:var(--green)">TP3 Hit Chance</span>
+              <span class="prob-pct" style="color:var(--green)" id="prob-tp3-val">0%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill tp3-fill" id="prob-tp3-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prob-row">
+            <div class="prob-label-row">
+              <span class="prob-name red">SL Risk</span>
+              <span class="prob-pct red" id="prob-sl-val">0%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill sl-fill" id="prob-sl-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prob-divider"></div>
+          <div class="prob-row">
+            <div class="prob-label-row">
+              <span class="prob-name cyan">Overall Confidence</span>
+              <span class="prob-pct cyan" id="prob-conf-val">0%</span>
+            </div>
+            <div class="prob-track conf-track">
+              <div class="prob-fill conf-fill" id="prob-conf-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Block -->
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span class="ms-val" id="st-total">0</span>
+            <span class="ms-label">Total Signals</span>
+          </div>
+          <div class="mini-stat">
+            <span class="ms-val green" id="st-wins">0</span>
+            <span class="ms-label">Wins</span>
+          </div>
+          <div class="mini-stat">
+            <span class="ms-val red" id="st-losses">0</span>
+            <span class="ms-label">Losses</span>
+          </div>
+          <div class="mini-stat">
+            <span class="ms-val cyan" id="st-winrate">0%</span>
+            <span class="ms-label">Win Rate</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 2: Orderflow Panel -->
+    <section class="card card-orderflow">
+      <div class="card-header">
+        <span class="card-title">🌊 ORDERFLOW MONITOR</span>
+        <span class="card-subtitle muted">Live taker buy/sell pressure</span>
+      </div>
+      <div class="of-grid" id="of-grid">
+        <!-- Populated by JS -->
+        <div class="of-loading"><span style="color:var(--cyan)">Initializing Orderflow Aggregations...</span> (will populate after first candle close)</div>
+      </div>
+    </section>
+
+    <!-- ROW 3: History Table -->
+    <section class="card card-history">
+      <div class="card-header">
+        <span class="card-title">📋 SIGNAL HISTORY</span>
+        <div class="history-controls">
+          <span class="muted small" id="history-count">Loading...</span>
+          <button class="btn-refresh" id="btn-refresh-history" onclick="loadHistory()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="history-table" id="history-table">
+          <thead>
+            <tr>
+              <th>TIME</th>
+              <th>DIR</th>
+              <th>ENTRY</th>
+              <th>SL</th>
+              <th>TP1</th>
+              <th>TP2</th>
+              <th>TP3</th>
+              <th>CONF</th>
+              <th>QUALITY</th>
+              <th>RESULT</th>
+              <th>LEVEL</th>
+              <th>REGIME</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="12" class="table-empty">Loading history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <span>MW TRADER © 2025 — Signal Engine v1.0</span>
+    <span class="muted">⚠️ This is a signal dashboard only. Not financial advice. Trade at your own risk.</span>
+    <span class="footer-refresh">Auto-refresh: <span id="refresh-countdown">15</span>s</span>
+  </footer>
+
+  <script>
+    const script = document.createElement('script');
+    script.src = 'app.js?v=' + new Date().getTime();
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
