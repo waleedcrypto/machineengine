@@ -148,7 +148,8 @@ async function loadEngineStatus() {
     el("st-winrate").textContent = wr;
 
     // Start Binance live price WS if needed
-    if (!binanceWs || binanceWs.readyState === WebSocket.CLOSED) {
+    if (!binanceWs || binanceWs.readyState === WebSocket.CLOSED || (Date.now() - wsLastUpdate > 10000 && binanceWs.readyState === WebSocket.OPEN)) {
+      console.log("WebSocket is stale or disconnected. Reconnecting...");
       connectBinancePrice(currentSymbol);
     }
 
@@ -511,26 +512,28 @@ function connectBinancePrice(symbol) {
     if (binanceWs) {
       binanceWs.close();
     }
-    // Use the 24hr ticker stream which updates constantly but is batched nicely by Binance (so it won't freeze the browser)
-    const wsUrl = `wss://fstream.binance.com/ws/${symbol.toLowerCase()}@ticker`;
+    // Using futures aggTrade for real-time live price (milliseconds)
+    const wsUrl = `wss://fstream.binance.com/ws/${symbol.toLowerCase()}@aggTrade`;
     console.log("Connecting to Binance Futures WS:", wsUrl);
     binanceWs = new WebSocket(wsUrl);
 
     binanceWs.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // For @ticker stream, "c" is the last close/current price. For @aggTrade it was "p".
-        const priceString = data.c || data.p;
+        const priceString = data.p; // p is price in aggTrade
         if (priceString) {
           livePrice = parseFloat(priceString).toFixed(2);
           
-          requestAnimationFrame(() => {
+          const now = Date.now();
+          if (now - wsLastUpdate > 50) { // Max 20 fps, so it looks very 'live'
             const lpEl = el("live-price");
             if (lpEl) lpEl.textContent = "$" + livePrice;
             
             const lcEl = el("lv-current");
             if (lcEl) lcEl.textContent = "$" + livePrice;
-          });
+            
+            wsLastUpdate = now;
+          }
         } 
       } catch(e) {
           // ignore parse errors
